@@ -240,34 +240,34 @@ ngx_http_mytest_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 
 static char* ngx_conf_set_myconfig(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
-    //×¢Òâ£¬²ÎÊıconf¾ÍÊÇhttp¿ò¼Ü´«¸øÎÒÃÇµÄ£¬ÔÚngx_http_mytest_create_loc_conf
-//»Øµ÷·½·¨ÖĞ·ÖÅäµÄ½á¹¹Ìångx_http_mytest_conf_t
+    //æ³¨æ„ï¼Œå‚æ•°confå°±æ˜¯httpæ¡†æ¶ä¼ ç»™æˆ‘ä»¬çš„ï¼Œåœ¨ngx_http_mytest_create_loc_conf
+//å›è°ƒæ–¹æ³•ä¸­åˆ†é…çš„ç»“æ„ä½“ngx_http_mytest_conf_t
     ngx_http_mytest_conf_t  *mycf = conf;
 
-    // cf->argsÊÇ1¸öngx_array_t¶ÓÁĞ£¬ËüµÄ³ÉÔ±¶¼ÊÇngx_str_t½á¹¹¡£
-//ÎÒÃÇÓÃvalueÖ¸Ïòngx_array_tµÄeltsÄÚÈİ£¬ÆäÖĞvalue[1]¾ÍÊÇµÚ1
-//¸ö²ÎÊı£¬Í¬Àívalue[2]ÊÇµÚ2¸ö²ÎÊı
+    // cf->argsæ˜¯1ä¸ªngx_array_té˜Ÿåˆ—ï¼Œå®ƒçš„æˆå‘˜éƒ½æ˜¯ngx_str_tç»“æ„ã€‚
+//æˆ‘ä»¬ç”¨valueæŒ‡å‘ngx_array_tçš„eltså†…å®¹ï¼Œå…¶ä¸­value[1]å°±æ˜¯ç¬¬1
+//ä¸ªå‚æ•°ï¼ŒåŒç†value[2]æ˜¯ç¬¬2ä¸ªå‚æ•°
     ngx_str_t* value = cf->args->elts;
 
-    //ngx_array_tµÄnelts±íÊ¾²ÎÊıµÄ¸öÊı
+    //ngx_array_tçš„neltsè¡¨ç¤ºå‚æ•°çš„ä¸ªæ•°
     if (cf->args->nelts > 1)
     {
-        //Ö±½Ó¸³Öµ¼´¿É£¬ ngx_str_t½á¹¹Ö»ÊÇÖ¸ÕëµÄ´«µİ
+        //ç›´æ¥èµ‹å€¼å³å¯ï¼Œ ngx_str_tç»“æ„åªæ˜¯æŒ‡é’ˆçš„ä¼ é€’
         mycf->my_config_str = value[1];
     }
     if (cf->args->nelts > 2)
     {
-        //½«×Ö·û´®ĞÎÊ½µÄµÚ2¸ö²ÎÊı×ªÎªÕûĞÍ
+        //å°†å­—ç¬¦ä¸²å½¢å¼çš„ç¬¬2ä¸ªå‚æ•°è½¬ä¸ºæ•´å‹
         mycf->my_config_num = ngx_atoi(value[2].data, value[2].len);
-        //Èç¹û×Ö·û´®×ª»¯ÕûĞÍÊ§°Ü£¬½«±¨"invalid number"´íÎó£¬
-//nginxÆô¶¯Ê§°Ü
+        //å¦‚æœå­—ç¬¦ä¸²è½¬åŒ–æ•´å‹å¤±è´¥ï¼Œå°†æŠ¥"invalid number"é”™è¯¯ï¼Œ
+//nginxå¯åŠ¨å¤±è´¥
         if (mycf->my_config_num == NGX_ERROR)
         {
             return "invalid number";
         }
     }
 
-    //·µ»Ø³É¹¦
+    //è¿”å›æˆåŠŸ
     return NGX_CONF_OK;
 }
 
@@ -299,7 +299,7 @@ static void* ngx_http_mytest_create_loc_conf(ngx_conf_t *cf)
 extern ngx_module_t  ngx_http_module;
 extern ngx_module_t  ngx_http_core_module;
 
-//½öÓÃÓÚ±éÀúlocationÄÚµÄtest_str×Ö¶Î
+//ä»…ç”¨äºéå†locationå†…çš„test_strå­—æ®µ
 void traversal(ngx_conf_t *cf, ngx_http_location_tree_node_t* node)
 {
     if (node != NULL)
@@ -330,7 +330,7 @@ void traversal(ngx_conf_t *cf, ngx_http_location_tree_node_t* node)
     }
 }
 
-//ÏÂÃæÒÔtest_strÎªÀıÔÚÆÁÄ»ÉÏÊä³ö¶ÁÈ¡µ½µÄËùÓĞ²»Í¬¿éµÄÖµ
+//ä¸‹é¢ä»¥test_strä¸ºä¾‹åœ¨å±å¹•ä¸Šè¾“å‡ºè¯»å–åˆ°çš„æ‰€æœ‰ä¸åŒå—çš„å€¼
 ngx_int_t
 ngx_http_mytest_post_conf(ngx_conf_t *cf)
 {
