@@ -3,13 +3,11 @@
 #include <ngx_http.h>
 
 
-typedef struct
-{
+typedef struct {
     ngx_flag_t		enable;
 } ngx_http_myfilter_conf_t;
 
-typedef struct
-{
+typedef struct {
     ngx_int_t   	add_prefix;
 } ngx_http_myfilter_ctx_t;
 
@@ -17,26 +15,18 @@ typedef struct
 static ngx_http_output_header_filter_pt ngx_http_next_header_filter;
 static ngx_http_output_body_filter_pt    ngx_http_next_body_filter;
 
-//½«ÔÚ°üÌåÖÐÌí¼ÓÕâ¸öÇ°×º
+//å°†åœ¨åŒ…ä½“ä¸­æ·»åŠ è¿™ä¸ªå‰ç¼€
 static ngx_str_t filter_prefix = ngx_string("[my filter prefix]");
 
-
-
-static void* ngx_http_myfilter_create_conf(ngx_conf_t *cf);
-static char *
-ngx_http_myfilter_merge_conf(ngx_conf_t *cf, void *parent, void *child);
+static void *ngx_http_myfilter_create_conf(ngx_conf_t *cf);
+static char *ngx_http_myfilter_merge_conf(ngx_conf_t *cf, void *parent, void *child);
 
 static ngx_int_t ngx_http_myfilter_init(ngx_conf_t *cf);
-static ngx_int_t
-ngx_http_myfilter_header_filter(ngx_http_request_t *r);
-static ngx_int_t
-ngx_http_myfilter_body_filter(ngx_http_request_t *r, ngx_chain_t *in);
+static ngx_int_t ngx_http_myfilter_header_filter(ngx_http_request_t *r);
+static ngx_int_t ngx_http_myfilter_body_filter(ngx_http_request_t *r, ngx_chain_t *in);
 
 
-
-
-static ngx_command_t  ngx_http_myfilter_commands[] =
-{
+static ngx_command_t  ngx_http_myfilter_commands[] = {
     {
         ngx_string("add_prefix"),
         NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF | NGX_HTTP_LMT_CONF | NGX_CONF_FLAG,
@@ -50,27 +40,25 @@ static ngx_command_t  ngx_http_myfilter_commands[] =
 };
 
 
-static ngx_http_module_t  ngx_http_myfilter_module_ctx =
-{
-    NULL,                                  /* preconfiguration·½·¨  */
-    ngx_http_myfilter_init,            /* postconfiguration·½·¨ */
+static ngx_http_module_t  ngx_http_myfilter_module_ctx = {
+    NULL,                                  /* preconfiguration */
+    ngx_http_myfilter_init,                /* postconfiguration */
 
-    NULL,                                  /*create_main_conf ·½·¨ */
-    NULL,                                  /* init_main_conf·½·¨ */
+    NULL,                                  /* create_main_conf */
+    NULL,                                  /* init_main_conf */
 
-    NULL,                                  /* create_srv_conf·½·¨ */
-    NULL,                                  /* merge_srv_conf·½·¨ */
+    NULL,                                  /* create_srv_conf */
+    NULL,                                  /* merge_srv_conf */
 
-    ngx_http_myfilter_create_conf,    /* create_loc_conf·½·¨ */
-    ngx_http_myfilter_merge_conf      /*merge_loc_conf·½·¨*/
+    ngx_http_myfilter_create_conf,         /* create_loc_conf */
+    ngx_http_myfilter_merge_conf           /* merge_loc_conf */
 };
 
 
-ngx_module_t  ngx_http_myfilter_module =
-{
+ngx_module_t  ngx_http_myfilter_module = {
     NGX_MODULE_V1,
-    &ngx_http_myfilter_module_ctx,     /* module context */
-    ngx_http_myfilter_commands,        /* module directives */
+    &ngx_http_myfilter_module_ctx,         /* module context */
+    ngx_http_myfilter_commands,            /* module directives */
     NGX_HTTP_MODULE,                       /* module type */
     NULL,                                  /* init master */
     NULL,                                  /* init module */
@@ -86,11 +74,11 @@ ngx_module_t  ngx_http_myfilter_module =
 
 static ngx_int_t ngx_http_myfilter_init(ngx_conf_t *cf)
 {
-    //²åÈëµ½Í·²¿´¦Àí·½·¨Á´±íµÄÊ×²¿
+    //æ’å…¥åˆ°å¤´éƒ¨å¤„ç†æ–¹æ³•é“¾è¡¨çš„é¦–éƒ¨
     ngx_http_next_header_filter = ngx_http_top_header_filter;
     ngx_http_top_header_filter = ngx_http_myfilter_header_filter;
 
-    //²åÈëµ½°üÌå´¦Àí·½·¨Á´±íµÄÊ×²¿
+    //æ’å…¥åˆ°åŒ…ä½“å¤„ç†æ–¹æ³•é“¾è¡¨çš„é¦–éƒ¨
     ngx_http_next_body_filter = ngx_http_top_body_filter;
     ngx_http_top_body_filter = ngx_http_myfilter_body_filter;
 
@@ -103,61 +91,57 @@ ngx_http_myfilter_header_filter(ngx_http_request_t *r)
     ngx_http_myfilter_ctx_t   *ctx;
     ngx_http_myfilter_conf_t  *conf;
 
-    //Èç¹û²»ÊÇ·µ»Ø³É¹¦£¬ÕâÊ±ÊÇ²»ÐèÒªÀí»áÊÇ·ñ¼ÓÇ°×ºµÄ£¬Ö±½Ó½»ÓÉÏÂÒ»¸ö¹ýÂËÄ£¿é
-//´¦ÀíÏìÓ¦Âë·Ç200µÄÇéÐÎ
-    if (r->headers_out.status != NGX_HTTP_OK)
-    {
+    //å¦‚æžœä¸æ˜¯è¿”å›žæˆåŠŸï¼Œè¿™æ—¶æ˜¯ä¸éœ€è¦ç†ä¼šæ˜¯å¦åŠ å‰ç¼€çš„ï¼Œç›´æŽ¥äº¤ç”±ä¸‹ä¸€ä¸ªè¿‡æ»¤æ¨¡å—
+    //å¤„ç†å“åº”ç éž200çš„æƒ…å½¢
+    if (r->headers_out.status != NGX_HTTP_OK) {
         return ngx_http_next_header_filter(r);
     }
 
-//»ñÈ¡httpÉÏÏÂÎÄ
+    //èŽ·å–httpä¸Šä¸‹æ–‡
     ctx = ngx_http_get_module_ctx(r, ngx_http_myfilter_module);
-    if (ctx)
-    {
-        //¸ÃÇëÇóµÄÉÏÏÂÎÄÒÑ¾­´æÔÚ£¬ÕâËµÃ÷
-// ngx_http_myfilter_header_filterÒÑ¾­±»µ÷ÓÃ¹ý1´Î£¬
-//Ö±½Ó½»ÓÉÏÂÒ»¸ö¹ýÂËÄ£¿é´¦Àí
+    if (ctx) {
+        //è¯¥è¯·æ±‚çš„ä¸Šä¸‹æ–‡å·²ç»å­˜åœ¨ï¼Œè¿™è¯´æ˜Ž
+        // ngx_http_myfilter_header_filterå·²ç»è¢«è°ƒç”¨è¿‡1æ¬¡ï¼Œ
+        //ç›´æŽ¥äº¤ç”±ä¸‹ä¸€ä¸ªè¿‡æ»¤æ¨¡å—å¤„ç†
         return ngx_http_next_header_filter(r);
     }
 
-//»ñÈ¡´æ´¢ÅäÖÃÏîµÄngx_http_myfilter_conf_t½á¹¹Ìå
+    //èŽ·å–å­˜å‚¨é…ç½®é¡¹çš„ngx_http_myfilter_conf_tç»“æž„ä½“
     conf = ngx_http_get_module_loc_conf(r, ngx_http_myfilter_module);
 
-//Èç¹ûenable³ÉÔ±Îª0£¬Ò²¾ÍÊÇÅäÖÃÎÄ¼þÖÐÃ»ÓÐÅäÖÃadd_prefixÅäÖÃÏî£¬
-//»òÕßadd_prefixÅäÖÃÏîµÄ²ÎÊýÖµÊÇoff£¬ÕâÊ±Ö±½Ó½»ÓÉÏÂÒ»¸ö¹ýÂËÄ£¿é´¦Àí
-    if (conf->enable == 0)
-    {
+    //å¦‚æžœenableæˆå‘˜ä¸º0ï¼Œä¹Ÿå°±æ˜¯é…ç½®æ–‡ä»¶ä¸­æ²¡æœ‰é…ç½®add_prefixé…ç½®é¡¹ï¼Œ
+    //æˆ–è€…add_prefixé…ç½®é¡¹çš„å‚æ•°å€¼æ˜¯offï¼Œè¿™æ—¶ç›´æŽ¥äº¤ç”±ä¸‹ä¸€ä¸ªè¿‡æ»¤æ¨¡å—å¤„ç†
+    if (conf->enable == 0) {
         return ngx_http_next_header_filter(r);
     }
 
-//¹¹ÔìhttpÉÏÏÂÎÄ½á¹¹Ìångx_http_myfilter_ctx_t
+    //æž„é€ httpä¸Šä¸‹æ–‡ç»“æž„ä½“ngx_http_myfilter_ctx_t
     ctx = ngx_pcalloc(r->pool, sizeof(ngx_http_myfilter_ctx_t));
-    if (ctx == NULL)
-    {
+    if (ctx == NULL) {
         return NGX_ERROR;
     }
 
-//add_prefixÎª0±íÊ¾²»¼ÓÇ°×º
+    //add_prefixä¸º0è¡¨ç¤ºä¸åŠ å‰ç¼€
     ctx->add_prefix = 0;
 
-//½«¹¹ÔìµÄÉÏÏÂÎÄÉèÖÃµ½µ±Ç°ÇëÇóÖÐ
+    //å°†æž„é€ çš„ä¸Šä¸‹æ–‡è®¾ç½®åˆ°å½“å‰è¯·æ±‚ä¸­
     ngx_http_set_ctx(r, ctx, ngx_http_myfilter_module);
 
-//myfilter¹ýÂËÄ£¿éÖ»´¦ÀíContent-TypeÊÇ"text/plain"ÀàÐÍµÄhttpÏìÓ¦
+    //myfilterè¿‡æ»¤æ¨¡å—åªå¤„ç†Content-Typeæ˜¯"text/plain"ç±»åž‹çš„httpå“åº”
     if (r->headers_out.content_type.len >= sizeof("text/plain") - 1
         && ngx_strncasecmp(r->headers_out.content_type.data, (u_char *) "text/plain", sizeof("text/plain") - 1) == 0)
     {
-        //1±íÊ¾ÐèÒªÔÚhttp°üÌåÇ°¼ÓÈëÇ°×º
+        //1è¡¨ç¤ºéœ€è¦åœ¨httpåŒ…ä½“å‰åŠ å…¥å‰ç¼€
         ctx->add_prefix = 1;
 
-//Èç¹û´¦ÀíÄ£¿éÒÑ¾­ÔÚContent-LengthÐ´ÈëÁËhttp°üÌåµÄ³¤¶È£¬ÓÉÓÚ
-//ÎÒÃÇ¼ÓÈëÁËÇ°×º×Ö·û´®£¬ËùÒÔÐèÒª°ÑÕâ¸ö×Ö·û´®µÄ³¤¶ÈÒ²¼ÓÈëµ½
-//Content-LengthÖÐ
+        //å¦‚æžœå¤„ç†æ¨¡å—å·²ç»åœ¨Content-Lengthå†™å…¥äº†httpåŒ…ä½“çš„é•¿åº¦ï¼Œç”±äºŽ
+        //æˆ‘ä»¬åŠ å…¥äº†å‰ç¼€å­—ç¬¦ä¸²ï¼Œæ‰€ä»¥éœ€è¦æŠŠè¿™ä¸ªå­—ç¬¦ä¸²çš„é•¿åº¦ä¹ŸåŠ å…¥åˆ°
+        //Content-Lengthä¸­
         if (r->headers_out.content_length_n > 0)
             r->headers_out.content_length_n += filter_prefix.len;
     }
 
-//½»ÓÉÏÂÒ»¸ö¹ýÂËÄ£¿é¼ÌÐø´¦Àí
+    //äº¤ç”±ä¸‹ä¸€ä¸ªè¿‡æ»¤æ¨¡å—ç»§ç»­å¤„ç†
     return ngx_http_next_header_filter(r);
 }
 
@@ -166,31 +150,31 @@ static ngx_int_t
 ngx_http_myfilter_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
 {
     ngx_http_myfilter_ctx_t   *ctx;
+
     ctx = ngx_http_get_module_ctx(r, ngx_http_myfilter_module);
-//Èç¹û»ñÈ¡²»µ½ÉÏÏÂÎÄ£¬»òÕßÉÏÏÂÎÄ½á¹¹ÌåÖÐµÄadd_prefixÎª0»òÕß2Ê±£¬
-//¶¼²»»áÌí¼ÓÇ°×º£¬ÕâÊ±Ö±½Ó½»¸øÏÂÒ»¸öhttp¹ýÂËÄ£¿é´¦Àí
-    if (ctx == NULL || ctx->add_prefix != 1)
-    {
+    //å¦‚æžœèŽ·å–ä¸åˆ°ä¸Šä¸‹æ–‡ï¼Œæˆ–è€…ä¸Šä¸‹æ–‡ç»“æž„ä½“ä¸­çš„add_prefixä¸º0æˆ–è€…2æ—¶ï¼Œ
+    //éƒ½ä¸ä¼šæ·»åŠ å‰ç¼€ï¼Œè¿™æ—¶ç›´æŽ¥äº¤ç»™ä¸‹ä¸€ä¸ªhttpè¿‡æ»¤æ¨¡å—å¤„ç†
+    if (ctx == NULL || ctx->add_prefix != 1) {
         return ngx_http_next_body_filter(r, in);
     }
 
-//½«add_prefixÉèÖÃÎª2£¬ÕâÑù¼´Ê¹ngx_http_myfilter_body_filter
-//ÔÙ´Î»Øµ÷Ê±£¬Ò²²»»áÖØ¸´Ìí¼ÓÇ°×º
+    //å°†add_prefixè®¾ç½®ä¸º2ï¼Œè¿™æ ·å³ä½¿ngx_http_myfilter_body_filter
+    //å†æ¬¡å›žè°ƒæ—¶ï¼Œä¹Ÿä¸ä¼šé‡å¤æ·»åŠ å‰ç¼€
     ctx->add_prefix = 2;
 
-//´ÓÇëÇóµÄÄÚ´æ³ØÖÐ·ÖÅäÄÚ´æ£¬ÓÃÓÚ´æ´¢×Ö·û´®Ç°×º
+    //ä»Žè¯·æ±‚çš„å†…å­˜æ± ä¸­åˆ†é…å†…å­˜ï¼Œç”¨äºŽå­˜å‚¨å­—ç¬¦ä¸²å‰ç¼€
     ngx_buf_t* b = ngx_create_temp_buf(r->pool, filter_prefix.len);
-//½«ngx_buf_tÖÐµÄÖ¸ÕëÕýÈ·µØÖ¸Ïòfilter_prefix×Ö·û´®
+    //å°†ngx_buf_tä¸­çš„æŒ‡é’ˆæ­£ç¡®åœ°æŒ‡å‘filter_prefixå­—ç¬¦ä¸²
     b->start = b->pos = filter_prefix.data;
     b->last = b->pos + filter_prefix.len;
 
-//´ÓÇëÇóµÄÄÚ´æ³ØÖÐÉú³Éngx_chain_tÁ´±í£¬½«¸Õ·ÖÅäµÄngx_buf_tÉèÖÃµ½
-//Æäbuf³ÉÔ±ÖÐ£¬²¢½«ËüÌí¼Óµ½Ô­ÏÈ´ý·¢ËÍµÄhttp°üÌåÇ°Ãæ
+    //ä»Žè¯·æ±‚çš„å†…å­˜æ± ä¸­ç”Ÿæˆngx_chain_té“¾è¡¨ï¼Œå°†åˆšåˆ†é…çš„ngx_buf_tè®¾ç½®åˆ°
+    //å…¶bufæˆå‘˜ä¸­ï¼Œå¹¶å°†å®ƒæ·»åŠ åˆ°åŽŸå…ˆå¾…å‘é€çš„httpåŒ…ä½“å‰é¢
     ngx_chain_t *cl = ngx_alloc_chain_link(r->pool);
     cl->buf = b;
-    cl->next = in;
+    cl->next = in;   // å¤´éƒ¨æ’å…¥
 
-//µ÷ÓÃÏÂÒ»¸öÄ£¿éµÄhttp°üÌå´¦Àí·½·¨£¬×¢ÒâÕâÊ±´«ÈëµÄÊÇÐÂÉú³ÉµÄclÁ´±í
+    //è°ƒç”¨ä¸‹ä¸€ä¸ªæ¨¡å—çš„httpåŒ…ä½“å¤„ç†æ–¹æ³•ï¼Œæ³¨æ„è¿™æ—¶ä¼ å…¥çš„æ˜¯æ–°ç”Ÿæˆçš„clé“¾è¡¨
     return ngx_http_next_body_filter(r, cl);
 }
 
@@ -199,15 +183,15 @@ static void* ngx_http_myfilter_create_conf(ngx_conf_t *cf)
 {
     ngx_http_myfilter_conf_t  *mycf;
 
-    //´´½¨´æ´¢ÅäÖÃÏîµÄ½á¹¹Ìå
+    //åˆ›å»ºå­˜å‚¨é…ç½®é¡¹çš„ç»“æž„ä½“
     mycf = (ngx_http_myfilter_conf_t  *)ngx_pcalloc(cf->pool, sizeof(ngx_http_myfilter_conf_t));
     if (mycf == NULL)
     {
         return NULL;
     }
 
-    //ngx_flat_tÀàÐÍµÄ±äÁ¿£¬Èç¹ûÊ¹ÓÃÔ¤Éèº¯Êýngx_conf_set_flag_slot
-//½âÎöÅäÖÃÏî²ÎÊý£¬±ØÐë³õÊ¼»¯ÎªNGX_CONF_UNSET
+    //ngx_flat_tç±»åž‹çš„å˜é‡ï¼Œå¦‚æžœä½¿ç”¨é¢„è®¾å‡½æ•°ngx_conf_set_flag_slot
+    //è§£æžé…ç½®é¡¹å‚æ•°ï¼Œå¿…é¡»åˆå§‹åŒ–ä¸ºNGX_CONF_UNSET
     mycf->enable = NGX_CONF_UNSET;
 
     return mycf;
@@ -219,7 +203,7 @@ ngx_http_myfilter_merge_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_http_myfilter_conf_t *prev = (ngx_http_myfilter_conf_t *)parent;
     ngx_http_myfilter_conf_t *conf = (ngx_http_myfilter_conf_t *)child;
 
-//ºÏ²¢ngx_flat_tÀàÐÍµÄÅäÖÃÏîenable
+    //åˆå¹¶ngx_flat_tç±»åž‹çš„é…ç½®é¡¹enable
     ngx_conf_merge_value(conf->enable, prev->enable, 0);
 
     return NGX_CONF_OK;
